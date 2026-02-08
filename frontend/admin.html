@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Admin Oversight | Complaint Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <div class="navbar">
+    <div class="logo">Complaint Tracker</div>
+    <div class="nav-buttons">
+      <a class="nav-btn" href="index.html">User Portal</a>
+      <a class="nav-btn active" href="admin.html">Admin Portal</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Admin Oversight</h2>
+
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <h3>Total Complaints</h3>
+        <div class="value" id="total">0</div>
+      </div>
+      <div class="stat-card orange">
+        <h3>Pending Issues</h3>
+        <div class="value" id="pending">0</div>
+      </div>
+      <div class="stat-card green">
+        <h3>Resolved</h3>
+        <div class="value" id="resolved">0</div>
+      </div>
+      <div class="stat-card red">
+        <h3>Rejected</h3>
+        <div class="value" id="rejected">0</div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <div class="search-wrapper">
+        <input id="search" placeholder="Search by ID, name or subject..." oninput="searchComplaints()">
+      </div>
+      <div class="filter-buttons">
+        <button class="filter-btn active" onclick="filterStatus('all', this)">All</button>
+        <button class="filter-btn" onclick="filterStatus('pending', this)">Pending</button>
+        <button class="filter-btn" onclick="filterStatus('resolved', this)">Resolved</button>
+        <button class="filter-btn" onclick="filterStatus('rejected', this)">Rejected</button>
+      </div>
+    </div>
+
+    <div id="complaintList" class="complaint-list"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>

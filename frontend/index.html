@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>User Portal | Complaint Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <div class="navbar">
+    <div class="logo">Complaint Tracker</div>
+    <div class="nav-buttons">
+      <a class="nav-btn active" href="index.html">User Portal</a>
+      <a class="nav-btn" href="admin.html">Admin Portal</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Raise a Complaint</h2>
+
+    <div class="form-card">
+      <div class="form-group">
+        <label for="name">Full Name</label>
+        <input id="name" placeholder="Enter your name">
+      </div>
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input id="email" type="email" placeholder="Enter your email">
+      </div>
+      <div class="form-group">
+        <label for="title">Issue Title</label>
+        <input id="title" placeholder="What is the issue?">
+      </div>
+      <div class="form-group">
+        <label for="description">Detailed Description</label>
+        <textarea id="description" placeholder="Provide more details..."></textarea>
+      </div>
+      <button class="submit-btn" onclick="submitComplaint()">Submit Complaint</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
