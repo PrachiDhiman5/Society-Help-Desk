@@ -1,5 +1,4 @@
 let complaints = [];
-let idCounter = 1;
 
 export const getAllComplaints = (req, res) => {
   res.json(complaints);
@@ -20,8 +19,7 @@ export const getComplaintById = (req, res) => {
 
 export const createComplaint = (req, res) => {
   const { name, email, title, description, flatNo, wing, category } = req.body;
-
-  // Server-side validation
+  
   if (!name || !email || !title || !description || !flatNo || !wing || !category) {
     return res.status(400).json({ message: "All fields are required." });
   }
