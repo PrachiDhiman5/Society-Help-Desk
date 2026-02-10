@@ -9,7 +9,7 @@
 <body>
 
   <div class="navbar">
-    <div class="logo">Complaint Tracker</div>
+    <div class="logo">Society Helpdesk</div>
     <div class="nav-buttons">
       <a class="nav-btn active" href="index.html">User Portal</a>
       <a class="nav-btn" href="admin.html">Admin Portal</a>
@@ -28,9 +28,36 @@
         <label for="email">Email Address</label>
         <input id="email" type="email" placeholder="Enter your email">
       </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="flatNo">Flat Number</label>
+          <input id="flatNo" placeholder="e.g. 402">
+        </div>
+        <div class="form-group">
+          <label>Wing/Block</label>
+          <div class="radio-group" id="wingContainer">
+            <label class="radio-label"><input type="radio" name="wing" value="A" checked> A</label>
+            <label class="radio-label"><input type="radio" name="wing" value="B"> B</label>
+            <label class="radio-label"><input type="radio" name="wing" value="C"> C</label>
+            <label class="radio-label"><input type="radio" name="wing" value="D"> D</label>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="category">Complaint Category</label>
+        <select id="category">
+          <option value="Plumbing">Plumbing</option>
+          <option value="Electrical">Electrical</option>
+          <option value="Security">Security/Intercom</option>
+          <option value="Lift">Lift/Elevator</option>
+          <option value="Cleaning">Cleaning/Sanitation</option>
+          <option value="Parking">Parking Issues</option>
+          <option value="Others">Others</option>
+        </select>
+      </div>
       <div class="form-group">
         <label for="title">Issue Title</label>
-        <input id="title" placeholder="What is the issue?">
+        <input id="title" placeholder="Briefly state the issue">
       </div>
       <div class="form-group">
         <label for="description">Detailed Description</label>

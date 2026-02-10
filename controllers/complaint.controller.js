@@ -19,9 +19,22 @@ export const getComplaintById = (req, res) => {
 
 
 export const createComplaint = (req, res) => {
-  const { name, email, title, description } = req.body;
+  const { name, email, title, description, flatNo, wing, category } = req.body;
 
-  
+  // Server-side validation
+  if (!name || !email || !title || !description || !flatNo || !wing || !category) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ message: "Invalid email format." });
+  }
+
+  if (isNaN(flatNo) || String(flatNo).trim() === "") {
+    return res.status(400).json({ message: "Flat Number must be numeric." });
+  }
+
   const customId = Math.floor(100000 + Math.random() * 900000);
 
   const newComplaint = {
@@ -30,6 +43,9 @@ export const createComplaint = (req, res) => {
     email,
     title,
     description,
+    flatNo,
+    wing,
+    category,
     status: "pending",
     createdAt: new Date()
   };
@@ -41,7 +57,7 @@ export const createComplaint = (req, res) => {
 
 export const updateComplaintStatus = (req, res) => {
   const id = Number(req.params.id);
-  const { status } = req.body;
+  const { status, adminResponse } = req.body;
 
   const complaint = complaints.find(c => c.id === id);
 
@@ -50,6 +66,9 @@ export const updateComplaintStatus = (req, res) => {
   }
 
   complaint.status = status;
+  if (adminResponse) {
+    complaint.adminResponse = adminResponse;
+  }
   res.json(complaint);
 };
 

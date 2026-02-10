@@ -5,11 +5,27 @@ let currentFilter = "all";
 async function submitComplaint() {
   const name = document.getElementById('name').value;
   const email = document.getElementById('email').value;
+  const flatNo = document.getElementById('flatNo').value;
+  const wing = document.querySelector('input[name="wing"]:checked')?.value;
+  const category = document.getElementById('category').value;
   const title = document.getElementById('title').value;
   const description = document.getElementById('description').value;
 
-  if (!name || !email || !title || !description) {
-    alert("Please fill in all fields.");
+  if (!name || !email || !flatNo || !wing || !title || !description) {
+    alert("Please fill in all required fields.");
+    return;
+  }
+
+  // Email Validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    alert("Please enter a valid email address.");
+    return;
+  }
+
+  // Flat Number Validation
+  if (isNaN(flatNo) || flatNo.trim() === "") {
+    alert("Please enter a valid numeric Flat Number.");
     return;
   }
 
@@ -17,7 +33,7 @@ async function submitComplaint() {
     const res = await fetch('/complaints', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, title, description })
+      body: JSON.stringify({ name, email, flatNo, wing, category, title, description })
     });
 
     if (res.ok) {
@@ -26,10 +42,16 @@ async function submitComplaint() {
 
       document.getElementById('name').value = '';
       document.getElementById('email').value = '';
+      document.getElementById('flatNo').value = '';
+      // Reset radio buttons
+      const firstWing = document.querySelector('input[name="wing"]');
+      if (firstWing) firstWing.checked = true;
+
       document.getElementById('title').value = '';
       document.getElementById('description').value = '';
     } else {
-      alert("Submission failed.");
+      const errorData = await res.json();
+      alert(`Submission failed: ${errorData.message || "Unknown error"}`);
     }
   } catch (err) {
     console.error(err);
@@ -50,20 +72,41 @@ async function loadComplaints() {
 }
 
 async function updateStatus(id, newStatus) {
+  let adminResponse = "";
+  if (newStatus === 'resolved' || newStatus === 'rejected') {
+    const promptMessage = newStatus === 'resolved'
+      ? "Enter a resolution message (Optional):"
+      : "Enter a reason for rejection (Required):";
+
+    adminResponse = prompt(promptMessage);
+
+    if (newStatus === 'rejected' && (adminResponse === null || adminResponse.trim() === "")) {
+      alert("A reason is required to reject an issue.");
+      return;
+    }
+  }
+
+  const adminToken = prompt("Enter Admin Authorization Token:");
+  if (!adminToken) {
+    alert("Authorization failed: No token provided.");
+    return;
+  }
+
   try {
     const res = await fetch(`/complaints/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'admin-secret-token'
+        'Authorization': adminToken
       },
-      body: JSON.stringify({ status: newStatus })
+      body: JSON.stringify({ status: newStatus, adminResponse })
     });
 
     if (res.ok) {
       loadComplaints();
     } else {
-      alert("Failed to update status.");
+      const errorData = await res.json();
+      alert(`Authorization failed: ${errorData.message || "Invalid Token"}`);
     }
   } catch (err) {
     console.error(err);
@@ -74,18 +117,25 @@ async function updateStatus(id, newStatus) {
 async function deleteComplaint(id) {
   if (!confirm("Are you sure you want to delete this complaint?")) return;
 
+  const adminToken = prompt("Enter Admin Authorization Token to Delete:");
+  if (!adminToken) {
+    alert("Delete blocked: Admin authorization required.");
+    return;
+  }
+
   try {
     const res = await fetch(`/complaints/${id}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': 'admin-secret-token'
+        'Authorization': adminToken
       }
     });
 
     if (res.ok) {
       loadComplaints();
     } else {
-      alert("Failed to delete complaint.");
+      const errorData = await res.json();
+      alert(`Delete failed: ${errorData.message || "Not Authorized"}`);
     }
   } catch (err) {
     console.error(err);
@@ -143,10 +193,18 @@ function renderComplaints() {
         <span class="comp-id">COMPLAINT ID: #${c.id}</span>
         <span class="status-badge ${c.status}">${c.status}</span>
       </div>
-      <div class="comp-title">${c.title}</div>
+      <div class="comp-title">
+        <span class="category-tag">${c.category}</span> ${c.title}
+      </div>
       <p>${c.description}</p>
+      ${c.adminResponse ? `
+        <div class="admin-response">
+          <strong>Official Response:</strong> ${c.adminResponse}
+        </div>
+      ` : ''}
       <div class="comp-meta">
         <strong>Reported by:</strong> ${c.name} (${c.email})<br>
+        <strong>Location:</strong> Flat ${c.flatNo}, Wing ${c.wing}<br>
         <strong>Date:</strong> ${new Date(c.createdAt).toLocaleString()}
       </div>
       <div class="card-actions">
