@@ -18,3 +18,4 @@ router.put('/:id', auth, updateComplaintStatus);
 router.delete('/:id', auth, deleteComplaint);
 
 export default router;
+ 

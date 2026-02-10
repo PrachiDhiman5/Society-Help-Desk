@@ -16,7 +16,7 @@ export const getComplaintById = (req, res) => {
   res.json(complaint);
 };
 
-
+ 
 export const createComplaint = (req, res) => {
   const { name, email, title, description, flatNo, wing, category } = req.body;
   
