@@ -17,11 +17,15 @@ const auth = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (error) {
-    // Fallback for demo transition: allow admin@123 for now or just reject
-    if (token === 'admin@123') {
-      return next();
-    }
     return res.status(401).json({ message: "Not Authorized: Invalid Token" });
+  }
+};
+
+export const checkAdmin = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') {
+    next();
+  } else {
+    res.status(403).json({ message: "Access Denied: Admin role required" });
   }
 };
 

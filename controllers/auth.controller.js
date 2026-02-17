@@ -45,6 +45,10 @@ export const registerResident = async (req, res) => {
         return res.status(400).json({ message: "Username and Email are required." });
     }
 
+    if (username.toLowerCase() === 'admin') {
+        return res.status(400).json({ message: "Username 'admin' is reserved." });
+    }
+
     const normalizedEmail = email.toLowerCase();
 
     try {
@@ -108,7 +112,7 @@ export const googleLogin = async (req, res) => {
         }
 
         // Special handling for the rare case where an admin uses Google (not recommended but supported)
-        if (role === 'admin' && user.role !== 'admin') {
+        if (role === 'admin' && user.role !== 'admin' && user.username === 'admin') {
             user.role = 'admin';
             updated = true;
         }
@@ -137,11 +141,8 @@ export const googleLogin = async (req, res) => {
 
 export const logout = async (req, res) => {
     try {
-        // Reset user role to resident on logout to ensure next admin session requires re-vetting
-        if (req.user && req.user.id) {
-            await User.findByIdAndUpdate(req.user.id, { role: 'resident' });
-        }
-        res.json({ message: "Logged out and role reset successfully" });
+        // Removed logic that resets user role to resident on logout
+        res.json({ message: "Logged out successfully" });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -150,9 +151,14 @@ export const logout = async (req, res) => {
 // Seed admin if not exists (for demo purposes)
 export const setupAdmin = async (req, res) => {
     try {
-        const adminExists = await User.findOne({ username: 'admin' });
-        if (adminExists) {
-            return res.status(400).json({ message: "Admin already exists" });
+        let adminUser = await User.findOne({ username: 'admin' });
+
+        if (adminUser) {
+            // If admin exists but role was changed or password needs reset
+            adminUser.role = 'admin';
+            adminUser.password = process.env.ADMIN_PASSWORD || 'admin123';
+            await adminUser.save();
+            return res.status(200).json({ message: "Admin account verified and restored successfully" });
         }
 
         const newAdmin = new User({
