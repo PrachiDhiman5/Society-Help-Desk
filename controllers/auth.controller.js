@@ -87,6 +87,14 @@ export const googleLogin = async (req, res) => {
     const { token, role } = req.body; // role passed from splash
     console.log(`Attempting Google Login for role: ${role}`);
 
+    // Critical check for Railway environment
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.JWT_SECRET) {
+        console.error("Missing critical environment variables: GOOGLE_CLIENT_ID or JWT_SECRET");
+        return res.status(500).json({
+            message: "Server Configuration Error: Missing Authentication Keys in Railway variables."
+        });
+    }
+
     try {
         const ticket = await client.verifyIdToken({
             idToken: token,
@@ -139,8 +147,8 @@ export const googleLogin = async (req, res) => {
             email: user.email
         });
     } catch (error) {
-        console.error("Google Login Error:", error);
-        res.status(401).json({ message: "Google Authentication Failed" });
+        console.error("Google Login Error Detail:", error);
+        res.status(401).json({ message: `Google Authentication Failed: ${error.message}` });
     }
 };
 
