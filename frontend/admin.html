@@ -69,6 +69,16 @@
   <script>
     // Auth Check
     (function () {
+      // Handle tokens passed via URL (Google Redirect Mode)
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('token')) {
+        localStorage.setItem('adminToken', params.get('token'));
+        localStorage.setItem('adminUser', params.get('user'));
+        localStorage.setItem('userRole', params.get('role'));
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
       const token = localStorage.getItem('adminToken');
       const adminUser = localStorage.getItem('adminUser');
       if (!token) {

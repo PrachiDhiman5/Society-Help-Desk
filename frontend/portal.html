@@ -111,6 +111,17 @@
   <script>
     // Auth Check & Auto-fill
     (function () {
+      // Handle tokens passed via URL (Google Redirect Mode)
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('token')) {
+        localStorage.setItem('adminToken', params.get('token'));
+        localStorage.setItem('adminUser', params.get('user'));
+        localStorage.setItem('userEmail', params.get('email'));
+        localStorage.setItem('userRole', params.get('role'));
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
       const token = localStorage.getItem('adminToken');
       const name = localStorage.getItem('adminUser');
       const email = localStorage.getItem('userEmail');

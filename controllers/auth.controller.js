@@ -84,7 +84,9 @@ export const registerResident = async (req, res) => {
 };
 
 export const googleLogin = async (req, res) => {
-    const { token, role } = req.body; // role passed from splash
+    // Handling both POPUP (token) and REDIRECT (credential) modes
+    const token = req.body.token || req.body.credential;
+    const role = req.body.role || 'resident';
     console.log(`Attempting Google Login for role: ${role}`);
 
     // Critical check for Railway environment
@@ -140,6 +142,16 @@ export const googleLogin = async (req, res) => {
         );
 
         console.log(`JWT Generated for user, role: ${tokenRole}`);
+
+        // If it was a REDIRECT mode (form submission), we should redirect the browser
+        if (req.headers['content-type'] === 'application/x-www-form-urlencoded') {
+            // Note: In redirect mode, we can't easily send the token to localStorage 
+            // without a landing page. For now, let's just send it as a query param 
+            // so the frontend can grab it.
+            const redirectUrl = tokenRole === 'admin' ? '/admin.html' : '/portal.html';
+            return res.redirect(`${redirectUrl}?token=${jwtToken}&user=${user.username}&email=${user.email}&role=${tokenRole}`);
+        }
+
         res.json({
             token: jwtToken,
             username: user.username,
