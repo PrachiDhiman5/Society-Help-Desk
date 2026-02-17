@@ -85,6 +85,7 @@ export const registerResident = async (req, res) => {
 
 export const googleLogin = async (req, res) => {
     const { token, role } = req.body; // role passed from splash
+    console.log(`Attempting Google Login for role: ${role}`);
 
     try {
         const ticket = await client.verifyIdToken({
@@ -93,16 +94,19 @@ export const googleLogin = async (req, res) => {
         });
 
         const { sub, email, name, picture } = ticket.getPayload();
+        console.log(`Google Token Verified for email: ${email}`);
         const normalizedEmail = email.toLowerCase();
 
         let user = await User.findOne({ email: normalizedEmail });
 
         if (!user) {
+            console.log(`User not found for email: ${normalizedEmail}`);
             return res.status(404).json({
                 message: "No account found for this email. Please SIGN UP first as a Resident."
             });
         }
 
+        console.log(`User found: ${user.username}, Role: ${user.role}`);
         // Sync Google info if not present
         let updated = false;
         if (!user.googleId) {
@@ -127,6 +131,7 @@ export const googleLogin = async (req, res) => {
             { expiresIn: '2h' }
         );
 
+        console.log(`JWT Generated for user, role: ${tokenRole}`);
         res.json({
             token: jwtToken,
             username: user.username,
