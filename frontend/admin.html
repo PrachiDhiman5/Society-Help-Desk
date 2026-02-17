@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Oversight | Complaint Tracker</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -9,16 +11,21 @@
 <body>
 
   <div class="navbar">
-    <div class="logo">Society Helpdesk</div>
+    <div class="logo"><span>Society</span>Helpdesk</div>
     <div class="nav-buttons">
-      <a class="nav-btn" href="index.html">User Portal</a>
+      <a class="nav-btn" href="portal.html">User Portal</a>
       <a class="nav-btn active" href="admin.html">Admin Portal</a>
+      <button onclick="logout()" class="nav-btn"
+        style="background: var(--danger); color: white; border: none; cursor: pointer;">Logout</button>
     </div>
   </div>
 
-  <div class="container">
-    <h2>Admin Oversight</h2>
+  <section class="hero">
+    <h1 id="welcomeTitle">Administrative Oversight</h1>
+    <p>Manage, resolve, and monitor all society complaints from a centralized dashboard.</p>
+  </section>
 
+  <div class="container">
     <div class="stats-grid">
       <div class="stat-card blue">
         <h3>Total Complaints</h3>
@@ -38,22 +45,57 @@
       </div>
     </div>
 
+    <div class="search-wrapper">
+      <input id="search" placeholder="Search by ID, name or subject..." oninput="searchComplaints()">
+    </div>
+
     <div class="filter-bar">
-      <div class="search-wrapper">
-        <input id="search" placeholder="Search by ID, name or subject..." oninput="searchComplaints()">
-      </div>
       <div class="filter-buttons">
-        <button class="filter-btn active" onclick="filterStatus('all', this)">All</button>
+        <button class="filter-btn active" onclick="filterStatus('all', this)">All Issues</button>
         <button class="filter-btn" onclick="filterStatus('pending', this)">Pending</button>
         <button class="filter-btn" onclick="filterStatus('resolved', this)">Resolved</button>
         <button class="filter-btn" onclick="filterStatus('rejected', this)">Rejected</button>
+        <button class="filter-btn" onclick="filterStatus('deleted', this)" style="border-color: var(--text-muted);">🗑️
+          Recycle Bin</button>
       </div>
     </div>
 
-    <div id="complaintList" class="complaint-list"></div>
+    <div id="complaintList" class="complaint-list">
+      <!-- Complaint Cards will be injected here -->
+    </div>
   </div>
 
   <script src="script.js"></script>
+  <script>
+    // Auth Check
+    (function () {
+      const token = localStorage.getItem('adminToken');
+      const adminUser = localStorage.getItem('adminUser');
+      if (!token) {
+        window.location.href = '/';
+      } else if (adminUser) {
+        document.getElementById('welcomeTitle').innerText = `Welcome, ${adminUser}`;
+      }
+    })();
+
+    async function logout() {
+      const token = localStorage.getItem('adminToken');
+      if (token) {
+        try {
+          await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+        } catch (err) {
+          console.error("Logout error:", err);
+        }
+      }
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
+      localStorage.removeItem('userRole');
+      window.location.href = '/';
+    }
+  </script>
 </body>
 
 </html>

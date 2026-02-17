@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome | Online Complaint Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
+<body class="splash-body landing-page">
+    <!-- Navigation Bar -->
+    <nav class="landing-nav">
+        <div class="logo"><span>Society</span>Helpdesk</div>
+        <div class="nav-links">
+            <button class="nav-btn-link" onclick="openRoleModal('login')">Login</button>
+            <button class="nav-btn-link signup" onclick="openRoleModal('signup')">Sign Up</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <main class="landing-hero">
+        <div class="hero-content animate-fade-in">
+            <h1 class="hero-title">Society Helpdesk</h1>
+            <h2 class="hero-subtitle">Complaint Tracker System</h2>
+            <div class="hero-quotes">
+                <p>"A better community starts with a voice that is heard."</p>
+                <p>Empowering residents, streamlining resolutions, and building trust.</p>
+            </div>
+            <button class="btn-get-started" onclick="openRoleModal('signup')">
+                Get Started <span>&rarr;</span>
+            </button>
+        </div>
+    </main>
+
+    <!-- Centered Modal for Roles & Auth -->
+    <div id="authModal" class="modal-overlay hidden" onclick="closeModalOnOuterClick(event)">
+        <div class="modal-card animate-scale-up" id="modalCard">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+
+            <!-- Step 1: Role Selection -->
+            <div id="roleSelection">
+                <h2 class="modal-title" id="modalMainTitle">Welcome to Helpdesk</h2>
+                <p class="modal-subtitle" id="modalSubTitle">To continue, please select your role</p>
+                <div class="role-options">
+                    <div class="role-item" onclick="selectRole('resident')">
+                        <div class="role-icon">🏠</div>
+                        <h3>Resident</h3>
+                        <span class="role-desc">File & track your issues</span>
+                    </div>
+                    <div class="role-item" onclick="selectRole('admin')">
+                        <div class="role-icon">🛡️</div>
+                        <h3>Administrator</h3>
+                        <span class="role-desc">Manage & resolve cases</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 1.5: Resident Signup Form -->
+            <div id="residentSignupForm" class="hidden">
+                <h2 class="modal-title">Join as Resident</h2>
+                <p class="modal-subtitle">Register to track your complaints efficiently</p>
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <input type="text" id="regName" placeholder="Full Name"
+                        style="width: 100%; border: 1.5px solid var(--border); border-radius: 12px; padding: 0.75rem 1rem;">
+                </div>
+                <div class="form-group" style="margin-bottom: 1.25rem;">
+                    <input type="email" id="regEmail" placeholder="Email Address"
+                        style="width: 100%; border: 1.5px solid var(--border); border-radius: 12px; padding: 0.75rem 1rem;">
+                </div>
+                <button class="btn btn-primary" onclick="proceedToPortal()" style="width: 100%;">Create Account &
+                    Continue</button>
+                <p class="back-link" onclick="resetModalSteps()"
+                    style="text-align: center; margin-top: 1rem; cursor: pointer; color: var(--text-muted);">← Back to
+                    roles</p>
+            </div>
+
+            <!-- Step 2: Admin Direct Login -->
+            <div id="adminVetting" class="hidden">
+                <h2 class="modal-title">Admin Login</h2>
+                <p class="modal-subtitle">Enter your official credentials</p>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <input type="text" id="adminId" placeholder="Admin ID"
+                        style="width: 100%; border: 1.5px solid var(--border); border-radius: 12px; padding: 0.75rem 1rem;">
+                </div>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <input type="password" id="adminPass" placeholder="Password"
+                        style="width: 100%; border: 1.5px solid var(--border); border-radius: 12px; padding: 0.75rem 1rem;">
+                </div>
+                <button class="btn btn-primary" onclick="verifyAdmin()" style="width: 100%;">Login to Dashboard</button>
+                <p class="back-link" onclick="resetModalSteps()"
+                    style="text-align: center; margin-top: 1rem; cursor: pointer; color: var(--text-muted);">← Back to
+                    roles</p>
+            </div>
+
+            <!-- Step 3: Google Login (Residents) -->
+            <div id="googleAuth" class="hidden">
+                <h2 class="modal-title">Resident Access</h2>
+                <p class="modal-subtitle">Sign in securely with your Google account</p>
+                <div class="google-wrapper">
+                    <div id="g_id_onload"
+                        data-client_id="44370028433-2os3fb7g1vv09ss9s2l7j28okrfueleh.apps.googleusercontent.com"
+                        data-context="signin" data-ux_mode="popup" data-callback="handleCredentialResponse"
+                        data-auto_prompt="false">
+                    </div>
+                    <div class="g_id_signin" data-type="standard" data-shape="pill" data-theme="outline"
+                        data-text="signin_with" data-size="large" data-logo_alignment="left">
+                    </div>
+                </div>
+                <p class="back-link" onclick="resetModalSteps()"
+                    style="text-align: center; margin-top: 1rem; cursor: pointer; color: var(--text-muted);">← Back to
+                    roles</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedRole = '';
+        let modalMode = 'login'; // 'login' or 'signup'
+
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('role') === 'admin') {
+                openRoleModal('login');
+                selectRole('admin');
+            }
+        };
+
+        function openRoleModal(mode = 'login') {
+            modalMode = mode;
+            document.getElementById('authModal').classList.remove('hidden');
+
+            const title = document.getElementById('modalMainTitle');
+            const sub = document.getElementById('modalSubTitle');
+
+            if (mode === 'signup') {
+                title.innerText = "Join Our Society";
+                sub.innerText = "Register now to start tracking your complaints";
+            } else {
+                title.innerText = "Welcome Back";
+                sub.innerText = "Login to manage your society helpdesk";
+            }
+
+            resetModalSteps();
+        }
+
+        function closeModal() {
+            document.getElementById('authModal').classList.add('hidden');
+        }
+
+        function closeModalOnOuterClick(e) {
+            if (e.target.id === 'authModal') closeModal();
+        }
+
+        function resetModalSteps() {
+            document.getElementById('roleSelection').classList.remove('hidden');
+            document.getElementById('adminVetting').classList.add('hidden');
+            document.getElementById('googleAuth').classList.add('hidden');
+            document.getElementById('residentSignupForm').classList.add('hidden');
+            document.getElementById('adminId').value = '';
+            document.getElementById('adminPass').value = '';
+            document.getElementById('regName').value = '';
+            document.getElementById('regEmail').value = '';
+        }
+
+        function selectRole(role) {
+            selectedRole = role;
+            document.getElementById('roleSelection').classList.add('hidden');
+
+            if (role === 'admin') {
+                document.getElementById('adminVetting').classList.remove('hidden');
+            } else {
+                if (modalMode === 'signup') {
+                    document.getElementById('residentSignupForm').classList.remove('hidden');
+                } else {
+                    document.getElementById('googleAuth').classList.remove('hidden');
+                }
+            }
+        }
+
+        async function proceedToPortal() {
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+
+            if (!name || !email) {
+                alert("Please enter both Name and Email.");
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert("Please enter a valid email address.");
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: name, email })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem('adminToken', data.token);
+                    localStorage.setItem('userRole', data.role);
+                    localStorage.setItem('adminUser', data.username);
+                    localStorage.setItem('userEmail', data.email);
+                    window.location.href = 'portal.html';
+                } else {
+                    const err = await res.json();
+                    alert("Registration Failed: " + err.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("An error occurred during registration.");
+            }
+        }
+
+        async function verifyAdmin() {
+            const username = document.getElementById('adminId').value;
+            const password = document.getElementById('adminPass').value;
+
+            if (!username || !password) {
+                alert("Please enter credentials.");
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem('adminToken', data.token);
+                    localStorage.setItem('userRole', 'admin');
+                    localStorage.setItem('adminUser', data.username);
+                    window.location.href = 'admin.html';
+                } else {
+                    const err = await res.json();
+                    alert("Verification Failed: " + err.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("An error occurred during verification.");
+            }
+        }
+
+        async function handleCredentialResponse(response) {
+            try {
+                const res = await fetch('/api/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        token: response.credential,
+                        role: selectedRole
+                    })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem('adminToken', data.token);
+                    localStorage.setItem('userRole', data.role);
+                    localStorage.setItem('adminUser', data.username);
+                    localStorage.setItem('userEmail', data.email);
+
+                    if (data.role === 'admin') {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'portal.html';
+                    }
+                } else {
+                    const err = await res.json();
+                    alert(err.message || "Login Failed");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("An error occurred during Google Login.");
+            }
+        }
+    </script>
+</body>
+
+</html>

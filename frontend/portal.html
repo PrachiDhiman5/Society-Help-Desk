@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Society Helpdesk | User Portal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <div class="navbar">
+    <div class="logo"><span>Society</span>Helpdesk</div>
+    <div class="nav-buttons">
+      <a class="nav-btn active" href="portal.html">User Portal</a>
+      <a class="nav-btn" href="/?role=admin">Admin Portal</a>
+      <button onclick="logout()" class="nav-btn"
+        style="background: var(--danger); color: white; border: none; cursor: pointer;">Logout</button>
+    </div>
+  </div>
+
+  <section class="hero">
+    <h1>Your Comfort, Our Priority</h1>
+    <p>Submit and track society-related complaints with ease. We're here to help resolve your issues quickly.</p>
+  </section>
+
+  <div class="container">
+    <div class="glass-card">
+      <h2 class="section-title">Raise a New Complaint</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input id="name" placeholder="John Doe">
+        </div>
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input id="email" type="email" placeholder="john@example.com">
+        </div>
+        <div class="form-group">
+          <label for="flatNo">Flat Number</label>
+          <input id="flatNo" placeholder="e.g. 402">
+        </div>
+        <div class="form-group">
+          <label>Wing/Block</label>
+          <div class="wing-selector">
+            <div class="wing-option">
+              <input type="radio" name="wing" value="A" id="wingA" checked>
+              <label for="wingA" class="wing-label">A</label>
+            </div>
+            <div class="wing-option">
+              <input type="radio" name="wing" value="B" id="wingB">
+              <label for="wingB" class="wing-label">B</label>
+            </div>
+            <div class="wing-option">
+              <input type="radio" name="wing" value="C" id="wingC">
+              <label for="wingC" class="wing-label">C</label>
+            </div>
+            <div class="wing-option">
+              <input type="radio" name="wing" value="D" id="wingD">
+              <label for="wingD" class="wing-label">D</label>
+            </div>
+          </div>
+        </div>
+        <div class="form-group full-width">
+          <label for="category">Complaint Category</label>
+          <select id="category">
+            <option value="Plumbing">Plumbing</option>
+            <option value="Electrical">Electrical</option>
+            <option value="Security">Security/Intercom</option>
+            <option value="Lift">Lift/Elevator</option>
+            <option value="Cleaning">Cleaning/Sanitation</option>
+            <option value="Parking">Parking Issues</option>
+            <option value="Others">Others</option>
+          </select>
+        </div>
+        <div class="form-group full-width">
+          <label for="title">Issue Title</label>
+          <input id="title" placeholder="Briefly state the issue">
+        </div>
+        <div class="form-group full-width">
+          <label for="description">Detailed Description</label>
+          <textarea id="description" placeholder="Provide more details about the problem..."></textarea>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="submitComplaint()">
+        Submit Complaint
+      </button>
+    </div>
+
+    <!-- TRACKER / HISTORY SECTION -->
+    <div class="tracker-section">
+      <h2 class="section-title">Your Complaint History</h2>
+      <p id="historySubtitle" style="text-align: center; color: var(--text-muted); margin-bottom: 1.5rem;">
+        Showing all complaints filed under your email address.
+      </p>
+
+      <!-- Manual ID Track (Still available) -->
+      <div class="track-input-group" style="margin-bottom: 2rem;">
+        <input id="trackId" placeholder="Enter Complaint ID (Optional)">
+        <button class="btn btn-primary" onclick="manualTrack()">Track by ID</button>
+      </div>
+
+      <div id="trackResult" class="track-result">
+        <div class="loading-spinner">Loading your history...</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    // Auth Check & Auto-fill
+    (function () {
+      const token = localStorage.getItem('adminToken');
+      const name = localStorage.getItem('adminUser');
+      const email = localStorage.getItem('userEmail');
+
+      if (!token) {
+        window.location.href = '/';
+      } else {
+        // Auto-fill form fields
+        if (name) document.getElementById('name').value = name;
+        if (email) {
+          document.getElementById('email').value = email;
+          // Trigger history fetch automatically
+          fetchHistory(email);
+        } else {
+          document.getElementById('trackResult').innerHTML = '<p style="text-align:center; color: var(--text-muted);">Please log in to view your history.</p>';
+        }
+      }
+    })();
+
+    async function fetchHistory(email) {
+      const resultDiv = document.getElementById('trackResult');
+      try {
+        const res = await fetch(`/complaints/user/${email}`);
+        if (!res.ok) throw new Error("Failed to fetch history");
+
+        const complaints = await res.json();
+        renderHistory(complaints);
+      } catch (err) {
+        console.error(err);
+        resultDiv.innerHTML = '<p class="error-text">Unable to load history. Please try again later.</p>';
+      }
+    }
+
+    function renderHistory(complaints) {
+      const resultDiv = document.getElementById('trackResult');
+      if (!complaints || complaints.length === 0) {
+        resultDiv.innerHTML = '<p style="text-align:center; color: var(--text-muted);">No complaints found for this email.</p>';
+        return;
+      }
+
+      let html = '<div class="history-list">';
+      complaints.forEach(c => {
+        const statusClass = `status-${c.status.toLowerCase()}`;
+        html += `
+          <div class="history-item glass-card animate-fade-in" style="margin-bottom: 1rem; border: 1px solid var(--border); padding: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+              <div>
+                <strong style="color: var(--primary); font-family: 'Outfit'; fontSize: 1.1rem;">${c.id}</strong>
+                <span class="status-pill ${statusClass}" style="margin-left: 0.5rem; text-transform: uppercase; font-size: 0.75rem;">${c.status}</span>
+              </div>
+              <span style="font-size: 0.85rem; color: var(--text-muted);">${new Date(c.createdAt).toLocaleDateString()}</span>
+            </div>
+            <h4 style="margin: 0.5rem 0; color: var(--text-main);">${c.title}</h4>
+            <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.4;">${c.description}</p>
+            ${c.adminResponse ? `
+              <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(var(--primary-hsl), 0.05); border-radius: 8px;">
+                <strong style="font-size: 0.8rem; color: var(--primary);">Admin Response:</strong>
+                <p style="margin-top: 0.25rem; font-size: 0.9rem;">${c.adminResponse}</p>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+      html += '</div>';
+      resultDiv.innerHTML = html;
+    }
+
+    async function manualTrack() {
+      const id = document.getElementById('trackId').value.trim();
+      if (!id) {
+        alert("Please enter a Complaint ID.");
+        return;
+      }
+
+      const resultDiv = document.getElementById('trackResult');
+      resultDiv.innerHTML = '<div class="loading-spinner">Searching...</div>';
+
+      try {
+        const res = await fetch(`/complaints/${id}`);
+        if (!res.ok) throw new Error("Complaint not found");
+
+        const complaint = await res.json();
+        renderHistory([complaint]); // Reuse render logic
+      } catch (err) {
+        resultDiv.innerHTML = `<p class="error-text">No complaint found with ID: ${id}</p>`;
+      }
+    }
+
+    async function logout() {
+      const token = localStorage.getItem('adminToken');
+      if (token && token !== 'temp-session-token') {
+        try {
+          await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+        } catch (err) {
+          console.error("Logout error:", err);
+        }
+      }
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('userEmail');
+      window.location.href = '/';
+    }
+  </script>
+</body>
+
+</html>

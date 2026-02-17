@@ -1,25 +1,34 @@
-let complaints = [];
+import Complaint from '../models/complaint.model.js';
 
-export const getAllComplaints = (req, res) => {
-  res.json(complaints);
-};
-
-
-export const getComplaintById = (req, res) => {
-  const id = Number(req.params.id);
-  const complaint = complaints.find(c => c.id === id);
-
-  if (!complaint) {
-    return res.status(404).json({ message: "Complaint not found" });
+export const getAllComplaints = async (req, res) => {
+  try {
+    const complaints = await Complaint.find({ isDeleted: false }).sort({ createdAt: -1 });
+    res.json(complaints);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-
-  res.json(complaint);
 };
 
- 
-export const createComplaint = (req, res) => {
+
+export const getComplaintById = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const complaint = await Complaint.findOne({ id: id, isDeleted: false });
+
+    if (!complaint) {
+      return res.status(404).json({ message: "Complaint not found" });
+    }
+
+    res.json(complaint);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+export const createComplaint = async (req, res) => {
   const { name, email, title, description, flatNo, wing, category } = req.body;
-  
+
   if (!name || !email || !title || !description || !flatNo || !wing || !category) {
     return res.status(400).json({ message: "All fields are required." });
   }
@@ -33,47 +42,117 @@ export const createComplaint = (req, res) => {
     return res.status(400).json({ message: "Flat Number must be numeric." });
   }
 
-  const customId = Math.floor(100000 + Math.random() * 900000);
+  const customId = `CMP-${Math.floor(100000 + Math.random() * 900000)}`;
 
-  const newComplaint = {
-    id: customId,
-    name,
-    email,
-    title,
-    description,
-    flatNo,
-    wing,
-    category,
-    status: "pending",
-    createdAt: new Date()
-  };
+  try {
+    const newComplaint = new Complaint({
+      id: customId,
+      name,
+      email,
+      title,
+      description,
+      flatNo,
+      wing,
+      category,
+      status: "pending",
+      createdAt: new Date()
+    });
 
-  complaints.push(newComplaint);
-  res.status(201).json(newComplaint);
+    await newComplaint.save();
+    res.status(201).json(newComplaint);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 };
 
 
-export const updateComplaintStatus = (req, res) => {
-  const id = Number(req.params.id);
+export const updateComplaintStatus = async (req, res) => {
+  const id = req.params.id;
   const { status, adminResponse } = req.body;
 
-  const complaint = complaints.find(c => c.id === id);
+  try {
+    const complaint = await Complaint.findOne({ id: id, isDeleted: false });
 
-  if (!complaint) {
-    return res.status(404).json({ message: "Complaint not found" });
-  }
+    if (!complaint) {
+      return res.status(404).json({ message: "Complaint not found" });
+    }
 
-  complaint.status = status;
-  if (adminResponse) {
-    complaint.adminResponse = adminResponse;
+    complaint.status = status;
+    if (adminResponse) {
+      complaint.adminResponse = adminResponse;
+    }
+    await complaint.save();
+    res.json(complaint);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
-  res.json(complaint);
 };
 
 
-export const deleteComplaint = (req, res) => {
-  const id = Number(req.params.id);
-  complaints = complaints.filter(c => c.id !== id);
+export const deleteComplaint = async (req, res) => {
+  const id = req.params.id;
+  try {
+    // Soft Delete: Just update the isDeleted flag
+    const complaint = await Complaint.findOne({ id: id });
 
-  res.json({ message: "Complaint deleted successfully" });
+    if (!complaint) {
+      return res.status(404).json({ message: "Complaint not found" });
+    }
+
+    complaint.isDeleted = true;
+    await complaint.save();
+
+    res.json({ message: "Complaint deleted successfully (Soft Delete)" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// --- Recycle Bin Functions ---
+
+export const getDeletedComplaints = async (req, res) => {
+  try {
+    const complaints = await Complaint.find({ isDeleted: true }).sort({ createdAt: -1 });
+    res.json(complaints);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const restoreComplaint = async (req, res) => {
+  const id = req.params.id;
+  try {
+    const complaint = await Complaint.findOne({ id: id });
+    if (!complaint) {
+      return res.status(404).json({ message: "Complaint not found" });
+    }
+    complaint.isDeleted = false;
+    await complaint.save();
+    res.json({ message: "Complaint restored successfully", complaint });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const permanentlyDeleteComplaint = async (req, res) => {
+  const id = req.params.id;
+  try {
+    const complaint = await Complaint.findOneAndDelete({ id: id });
+    if (!complaint) {
+      return res.status(404).json({ message: "Complaint not found" });
+    }
+    res.json({ message: "Complaint permanently deleted from database" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getComplaintsByEmail = async (req, res) => {
+  const email = req.params.email.toLowerCase();
+  try {
+    const complaints = await Complaint.find({ email: email, isDeleted: false }).sort({ createdAt: -1 });
+    res.json(complaints);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
