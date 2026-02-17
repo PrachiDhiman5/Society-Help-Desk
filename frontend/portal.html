@@ -92,13 +92,13 @@
     <div class="tracker-section">
       <h2 class="section-title">Your Complaint History</h2>
       <p id="historySubtitle" style="text-align: center; color: var(--text-muted); margin-bottom: 1.5rem;">
-        Showing all complaints filed under your email address.
+        Track your complaints using either your <strong>Complaint ID</strong> or <strong>Email Address</strong>.
       </p>
 
       <!-- Manual ID Track (Still available) -->
       <div class="track-input-group" style="margin-bottom: 2rem;">
-        <input id="trackId" placeholder="Enter Complaint ID (Optional)">
-        <button class="btn btn-primary" onclick="manualTrack()">Track by ID</button>
+        <input id="trackId" placeholder="Enter Complaint ID or Email Address">
+        <button class="btn btn-primary" onclick="manualTrack()">Track Status</button>
       </div>
 
       <div id="trackResult" class="track-result">
@@ -137,9 +137,11 @@
         if (!res.ok) throw new Error("Failed to fetch history");
 
         const complaints = await res.json();
+        resultDiv.style.display = 'block'; // Ensure container is visible
         renderHistory(complaints);
       } catch (err) {
         console.error(err);
+        resultDiv.style.display = 'block';
         resultDiv.innerHTML = '<p class="error-text">Unable to load history. Please try again later.</p>';
       }
     }
@@ -158,7 +160,7 @@
           <div class="history-item glass-card animate-fade-in" style="margin-bottom: 1rem; border: 1px solid var(--border); padding: 1rem;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
               <div>
-                <strong style="color: var(--primary); font-family: 'Outfit'; fontSize: 1.1rem;">${c.id}</strong>
+                <strong style="color: var(--primary); font-family: 'Outfit'; font-size: 1.1rem;">${c.id}</strong>
                 <span class="status-pill ${statusClass}" style="margin-left: 0.5rem; text-transform: uppercase; font-size: 0.75rem;">${c.status}</span>
               </div>
               <span style="font-size: 0.85rem; color: var(--text-muted);">${new Date(c.createdAt).toLocaleDateString()}</span>
@@ -179,23 +181,40 @@
     }
 
     async function manualTrack() {
-      const id = document.getElementById('trackId').value.trim();
-      if (!id) {
-        alert("Please enter a Complaint ID.");
+      const input = document.getElementById('trackId').value.trim();
+      if (!input) {
+        alert("Please enter a Complaint ID or Email Address.");
         return;
       }
 
       const resultDiv = document.getElementById('trackResult');
+      const subtitle = document.getElementById('historySubtitle');
+      resultDiv.style.display = 'block'; // Show container
       resultDiv.innerHTML = '<div class="loading-spinner">Searching...</div>';
 
-      try {
-        const res = await fetch(`/complaints/${id}`);
-        if (!res.ok) throw new Error("Complaint not found");
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const isEmail = emailRegex.test(input);
 
-        const complaint = await res.json();
-        renderHistory([complaint]); // Reuse render logic
+      try {
+        const url = isEmail ? `/complaints/user/${input.toLowerCase()}` : `/complaints/${input}`;
+        const res = await fetch(url);
+
+        if (!res.ok) {
+          if (isEmail) throw new Error("No complaints found for this email.");
+          throw new Error("Complaint not found with this ID.");
+        }
+
+        const data = await res.json();
+
+        if (isEmail) {
+          subtitle.innerHTML = `Showing history for: <strong>${input}</strong>`;
+          renderHistory(data);
+        } else {
+          subtitle.innerHTML = `Showing status for ID: <strong>${input}</strong>`;
+          renderHistory([data]);
+        }
       } catch (err) {
-        resultDiv.innerHTML = `<p class="error-text">No complaint found with ID: ${id}</p>`;
+        resultDiv.innerHTML = `<p class="error-text">${err.message}</p>`;
       }
     }
 

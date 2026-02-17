@@ -10,6 +10,10 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 export const login = async (req, res) => {
     const { username, password } = req.body;
 
+    if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+    }
+
     try {
         const user = await User.findOne({ username });
         if (!user) {
@@ -29,11 +33,18 @@ export const login = async (req, res) => {
 
         res.json({ token, username: user.username, role: user.role });
     } catch (error) {
+        console.error("Login Error:", error);
         res.status(500).json({ message: error.message });
     }
 };
 
 export const registerResident = async (req, res) => {
+    const { username, email } = req.body;
+
+    if (!username || !email) {
+        return res.status(400).json({ message: "Username and Email are required." });
+    }
+
     const normalizedEmail = email.toLowerCase();
 
     try {
@@ -63,6 +74,7 @@ export const registerResident = async (req, res) => {
             email: user.email
         });
     } catch (error) {
+        console.error("Registration error:", error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -118,7 +130,7 @@ export const googleLogin = async (req, res) => {
             email: user.email
         });
     } catch (error) {
-        console.error(error);
+        console.error("Google Login Error:", error);
         res.status(401).json({ message: "Google Authentication Failed" });
     }
 };
